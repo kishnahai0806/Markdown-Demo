@@ -8,9 +8,6 @@ This document records the technology choices that support the Campus Hub MVP arc
 ---
 
 ## TSDR-001: Frontend framework — React + Vite
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 We need a modern UI for event discovery and submissions with fast local development and a common industry stack.
 
@@ -30,9 +27,6 @@ Use **React** with **Vite**.
 ---
 
 ## TSDR-002: Styling — Tailwind CSS
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 The MVP needs a clean, consistent design without spending lots of time on custom CSS architecture.
 
@@ -52,9 +46,6 @@ Use **Tailwind CSS**.
 ---
 
 ## TSDR-003: Server-state fetching — TanStack Query
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 The UI needs caching, loading states, retries, and easy refresh after mutations (submit/approve).
 
@@ -74,9 +65,6 @@ Use **TanStack Query** for API data fetching and caching.
 ---
 
 ## TSDR-004: Backend — Spring Boot REST API
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 We need a single backend to enforce event status rules, validation, and RBAC permissions, matching the modular monolith decision.
 
@@ -100,9 +88,6 @@ Use **Java 21 + Spring Boot** with:
 ---
 
 ## TSDR-005: Database — PostgreSQL + migrations
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 Event discovery needs filtering/sorting and relational integrity (events, users, bookmarks, approvals).
 
@@ -121,9 +106,6 @@ Use **PostgreSQL** with **Flyway** (or Liquibase) for migrations.
 ---
 
 ## TSDR-006: Authentication — JWT (or cookie sessions) with RBAC
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 We need simple authentication and clear authorization rules for roles: `USER`, `ORGANIZER`, `ADMIN`.
 
@@ -147,9 +129,6 @@ And enforce:
 ---
 
 ## TSDR-007: Deployment — Low-ops hosting + managed Postgres
-**Status:** Proposed  
-**Date:** 2026-02-04
-
 ### Context
 The MVP should be easy to deploy and maintain with limited operational resources.
 
@@ -171,9 +150,6 @@ Deploy:
 ---
 
 ## TSDR-008: CI/CD — GitHub Actions
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 We want repeatable builds/tests and safe deployments.
 
