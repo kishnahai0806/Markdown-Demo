@@ -8,9 +8,6 @@ This document records the key architecture decisions for the **Campus Hub** MVP.
 ---
 
 ## ADR-001: System roles & communication — Client–Server
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 Campus Hub is a web app where students browse events, organizers submit events, and admins review/approve them. We need clear ownership of rules like event status transitions and permissions, without unnecessary operational complexity.
 
@@ -32,9 +29,6 @@ Use a **Client–Server** architecture:
 ---
 
 ## ADR-002: Deployment & evolution — Modular monolith
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 The MVP needs fast iteration, straightforward testing, and low ops overhead. Team size and expected traffic do not justify microservices complexity.
 
@@ -53,9 +47,6 @@ Build and deploy as a **single application (monolith)** with **modular boundarie
 ---
 
 ## ADR-003: Code organization — Feature-based (vertical slices) with layered subfolders
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 ChatGPT recommended feature-based organization; Gemini recommended layered architecture. For maintainability in a small team, we want changes localized by feature *without* losing clarity of “where business logic lives.”
 
@@ -80,9 +71,6 @@ Example:
 ---
 
 ## ADR-004: Data & state ownership — Single relational database
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 The MVP relies on event lifecycle state, search/filter queries, and relational connections (events ↔ users ↔ bookmarks ↔ reviews).
 
@@ -101,9 +89,6 @@ Use a **single relational database** as the system of record.
 ---
 
 ## ADR-005: Interaction model — Synchronous request/response
-**Status:** Accepted  
-**Date:** 2026-02-04
-
 ### Context
 Users need immediate feedback for actions like submitting an event, approving/rejecting, and searching. The MVP doesn’t include heavy processing workloads.
 
