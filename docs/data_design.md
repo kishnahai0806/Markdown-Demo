@@ -1,7 +1,6 @@
 # Data Design (Based on Production + Shipping Logs)
 
-This ERD is based on the provided **Production Log** and **Shipping Log** data. fileciteturn0file0 fileciteturn0file1
-
+This ERD is based on the provided **Production Log** and **Shipping Log** data. 
 ---
 
 ## Entities and Attributes
