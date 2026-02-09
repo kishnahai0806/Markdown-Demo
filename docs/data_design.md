@@ -1,6 +1,7 @@
 # Data Design (Based on Production + Shipping Logs)
 
-This ERD is based on the provided **Production Log** and **Shipping Log** data. 
+This ERD is based on the provided **Production Log** and **Shipping Log** data.
+
 ---
 
 ## Entities and Attributes
@@ -31,7 +32,7 @@ This ERD is based on the provided **Production Log** and **Shipping Log** data.
 - `created_date` *(optional)*
 
 ### ProductionRun
-Represents one row in the production log (a specific run/record for a lot on a line/shift/date). fileciteturn0file0
+Represents one row in the production log (a specific run/record for a lot on a line/shift/date).
 - `production_run_id` (PK)
 - `run_date`
 - `week_id` (FK → CalendarWeek)
@@ -43,12 +44,12 @@ Represents one row in the production log (a specific run/record for a lot on a l
 - `downtime_minutes`
 
 ### IssueType
-Derived from “Primary Issue” values (examples: Material shortage, Changeover delay, Tool wear, Sensor fault, Operator training, Quality hold). fileciteturn0file0
+Derived from “Primary Issue” values (examples: Material shortage, Changeover delay, Tool wear, Sensor fault, Operator training, Quality hold).
 - `issue_type_id` (PK)
 - `name`
 
 ### ProductionIssue
-Represents the presence of an issue for a production run when “Line Issue?” is Yes, with optional notes. fileciteturn0file0
+Represents the presence of an issue for a production run when “Line Issue?” is Yes, with optional notes.
 - `issue_id` (PK)
 - `production_run_id` (FK → ProductionRun, UNIQUE)
 - `issue_type_id` (FK → IssueType)
@@ -67,7 +68,7 @@ Represents the presence of an issue for a production run when “Line Issue?” 
 - `customer_id` (FK → Customer)
 
 ### Shipment
-Represents one shipment record for a lot. fileciteturn0file1
+Represents one shipment record for a lot.
 - `shipment_id` (PK)
 - `ship_date`
 - `week_id` (FK → CalendarWeek)
@@ -201,4 +202,3 @@ erDiagram
     string hold_reason
     string shipping_notes
   }
-```
