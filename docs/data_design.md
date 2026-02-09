@@ -1,201 +1,134 @@
-# Data Design (Operations Issues Reporting)
+# Data Design (Based on Production + Shipping Logs)
 
-This document derives data entities + relationships from the **Operations user story** and **Acceptance Criteria**:
-
-**User Story**  
-As an operations analyst, I want to pull consistent numbers about issues (by week and production line) and identify affected lots, so that I can respond quickly and confidently when leadership asks for updates.
-
-**Acceptance Criteria (summary)**  
-- Pick a **week** and a **production line**  
-- Show **consistent issue totals** for that selection  
-- Show **affected lots** for that week + line  
-- Allow **filter/group** by week and line (no manual calculations)  
-- Allow **export** of the summary + affected lots
+This ERD is based on the provided **Production Log** and **Shipping Log** data. fileciteturn0file0 fileciteturn0file1
 
 ---
 
-## AI #1 extraction (focus: reporting + aggregation)
+## Entities and Attributes
 
-### Entities
-- **ProductionLine**
-  - `line_id` (PK)
-  - `line_name`
-  - `location` *(optional)*
-  - `active`
-
-- **CalendarWeek**
-  - `week_id` (PK) — format like `YYYY-WW`
-  - `start_date`
-  - `end_date`
-
-- **Lot**
-  - `lot_id` (PK)
-  - `lot_code` *(human-friendly identifier)*
-  - `line_id` (FK → ProductionLine)
-  - `week_id` (FK → CalendarWeek)
-  - `started_at` *(optional)*
-  - `ended_at` *(optional)*
-
-- **IssueEvent**
-  - `issue_id` (PK)
-  - `line_id` (FK → ProductionLine)
-  - `week_id` (FK → CalendarWeek)
-  - `lot_id` (FK → Lot)
-  - `issue_type` *(string)*
-  - `occurred_at`
-  - `severity` *(optional)*
-  - `notes` *(optional)*
-
-### Relationships
-- ProductionLine **1—M** Lot
-- CalendarWeek **1—M** Lot
-- Lot **1—M** IssueEvent
-- ProductionLine **1—M** IssueEvent
-- CalendarWeek **1—M** IssueEvent
-
-**Why this helps:** weekly totals are fast (group by `week_id`, `line_id`), and affected lots come from distinct `lot_id`.
-
----
-
-## AI #2 extraction (focus: traceability + clean normalization)
-
-### Entities
-- **ProductionLine**
-  - `line_id` (PK)
-  - `name`
-  - `plant` *(optional)*
-
-- **Lot**
-  - `lot_id` (PK)
-  - `lot_code`
-  - `produced_on_line_id` (FK → ProductionLine)
-  - `produced_at` *(timestamp range or start/end)*
-
-- **Issue**
-  - `issue_id` (PK)
-  - `lot_id` (FK → Lot)
-  - `line_id` (FK → ProductionLine)
-  - `issue_type_id` (FK → IssueType)
-  - `created_at`
-  - `description` *(optional)*
-
-- **IssueType**
-  - `issue_type_id` (PK)
-  - `name`
-  - `category` *(optional)*
-
-- **ReportExport**
-  - `export_id` (PK)
-  - `week_key` *(string like `YYYY-WW`)*
-  - `line_id` (FK → ProductionLine)
-  - `export_format` *(csv/pdf/xlsx)*
-  - `created_at`
-
-### Relationships
-- ProductionLine **1—M** Lot
-- Lot **1—M** Issue
-- IssueType **1—M** Issue
-- ProductionLine **1—M** Issue
-- ProductionLine **1—M** ReportExport
-
-**Why this helps:** `IssueType` avoids inconsistent free-text issue types; `ReportExport` supports the “export results” requirement.
-
----
-
-## Comparison (what each AI did better)
-
-- **AI #1 did better**
-  - Modeled **CalendarWeek** explicitly (clear weekly reporting boundaries).
-  - Included `week_id` directly on the issue record for **simple aggregation** and “consistent totals”.
-
-- **AI #2 did better**
-  - Normalized issue typing via **IssueType** (prevents messy `issue_type` strings).
-  - Added **ReportExport** for the export requirement and auditing.
-
----
-
-## Final merged data model
-
-### Entities & attributes
-
-#### ProductionLine
+### ProductionLine
 - `line_id` (PK)
-- `name`
-- `location` *(optional)*
-- `active`
+- `name` *(e.g., “Line 1”, “Line 4”)*
+- `is_active` *(optional)*
 
-#### CalendarWeek
-- `week_id` (PK) — `YYYY-WW`
+### Shift
+- `shift_id` (PK)
+- `name` *(Day | Night | Swing)*
+
+### CalendarWeek
+- `week_id` (PK) *(e.g., `2026-W03`)*
 - `start_date`
 - `end_date`
 
-#### Lot
-- `lot_id` (PK)
-- `lot_code`
-- `line_id` (FK → ProductionLine)
-- `week_id` (FK → CalendarWeek)
-- `started_at` *(optional)*
-- `ended_at` *(optional)*
+> **Note:** Week can be derived from dates, but storing a `week_id` ensures consistent weekly reporting.
 
-#### IssueType
-- `issue_type_id` (PK)
-- `name`
-- `category` *(optional)*
-
-#### Issue
-- `issue_id` (PK)
-- `lot_id` (FK → Lot)
-- `line_id` (FK → ProductionLine)
-- `week_id` (FK → CalendarWeek)
-- `issue_type_id` (FK → IssueType)
-- `occurred_at`
-- `severity` *(optional)*
+### Part
+- `part_number` (PK) *(e.g., `SW-6899-B`)*
 - `description` *(optional)*
 
-#### ReportExport *(optional but recommended for auditability)*
-- `export_id` (PK)
+### Lot
+- `lot_id` (PK) *(string, as shown in logs; formatting varies)*
+- `part_number` (FK → Part)
+- `created_date` *(optional)*
+
+### ProductionRun
+Represents one row in the production log (a specific run/record for a lot on a line/shift/date). fileciteturn0file0
+- `production_run_id` (PK)
+- `run_date`
 - `week_id` (FK → CalendarWeek)
+- `shift_id` (FK → Shift)
 - `line_id` (FK → ProductionLine)
-- `export_format` *(csv/pdf/xlsx)*
-- `created_at`
-- `created_by` *(optional)*
+- `lot_id` (FK → Lot)
+- `units_planned`
+- `units_actual`
+- `downtime_minutes`
 
-### Relationships (final)
-- ProductionLine **1—M** Lot
-- CalendarWeek **1—M** Lot
-- Lot **1—M** Issue
-- IssueType **1—M** Issue
-- ProductionLine **1—M** Issue
-- CalendarWeek **1—M** Issue
-- ProductionLine **1—M** ReportExport
-- CalendarWeek **1—M** ReportExport
+### IssueType
+Derived from “Primary Issue” values (examples: Material shortage, Changeover delay, Tool wear, Sensor fault, Operator training, Quality hold). fileciteturn0file0
+- `issue_type_id` (PK)
+- `name`
 
-**How this satisfies the requirements**
-- **Issue totals by week + line:** aggregate `Issue` by (`week_id`, `line_id`).
-- **Affected lots:** distinct `Issue.lot_id` for a given (`week_id`, `line_id`).
-- **Consistency:** totals come from one canonical table (`Issue`), with stable keys.
-- **Export:** `ReportExport` provides traceability for what was exported and when.
+### ProductionIssue
+Represents the presence of an issue for a production run when “Line Issue?” is Yes, with optional notes. fileciteturn0file0
+- `issue_id` (PK)
+- `production_run_id` (FK → ProductionRun, UNIQUE)
+- `issue_type_id` (FK → IssueType)
+- `supervisor_notes` *(optional)*
+
+### Customer
+- `customer_id` (PK)
+- `name`
+
+### Carrier
+- `carrier_id` (PK)
+- `name`
+
+### SalesOrder
+- `sales_order_id` (PK) *(e.g., `SO-52588`)*
+- `customer_id` (FK → Customer)
+
+### Shipment
+Represents one shipment record for a lot. fileciteturn0file1
+- `shipment_id` (PK)
+- `ship_date`
+- `week_id` (FK → CalendarWeek)
+- `lot_id` (FK → Lot)
+- `sales_order_id` (FK → SalesOrder)
+- `destination_state`
+- `carrier_id` (FK → Carrier)
+- `bol_number` *(optional)*
+- `tracking_or_pro` *(optional)*
+- `qty_shipped`
+- `ship_status` *(e.g., Shipped, Partial, On Hold, Backordered)*
+- `hold_reason` *(optional; e.g., Quality hold, Paperwork missing, Carrier delay, Customer request)*
+- `shipping_notes` *(optional)*
 
 ---
 
-## Mermaid.js ERD (final)
+## Relationships (Summary)
+
+- **ProductionLine** 1 ── * **ProductionRun**
+- **Shift** 1 ── * **ProductionRun**
+- **CalendarWeek** 1 ── * **ProductionRun**
+- **Part** 1 ── * **Lot**
+- **Lot** 1 ── * **ProductionRun**
+- **ProductionRun** 0..1 ── 1 **ProductionIssue**
+- **IssueType** 1 ── * **ProductionIssue**
+- **Lot** 1 ── * **Shipment**
+- **CalendarWeek** 1 ── * **Shipment**
+- **Customer** 1 ── * **SalesOrder**
+- **SalesOrder** 1 ── * **Shipment**
+- **Carrier** 1 ── * **Shipment**
+
+---
+
+## Mermaid ERD (mermaid.js)
 
 ```mermaid
 erDiagram
-  PRODUCTION_LINE ||--o{ LOT : produces
-  CALENDAR_WEEK  ||--o{ LOT : groups
-  LOT            ||--o{ ISSUE : has
-  ISSUE_TYPE     ||--o{ ISSUE : categorizes
-  PRODUCTION_LINE ||--o{ ISSUE : occurs_on
-  CALENDAR_WEEK   ||--o{ ISSUE : occurs_in
-  PRODUCTION_LINE ||--o{ REPORT_EXPORT : exports
-  CALENDAR_WEEK   ||--o{ REPORT_EXPORT : exports_for
+  PRODUCTION_LINE ||--o{ PRODUCTION_RUN : runs_on
+  SHIFT          ||--o{ PRODUCTION_RUN : during
+  CALENDAR_WEEK  ||--o{ PRODUCTION_RUN : in_week
+  PART           ||--o{ LOT : produces
+  LOT            ||--o{ PRODUCTION_RUN : used_in
+  PRODUCTION_RUN ||--o| PRODUCTION_ISSUE : may_have
+  ISSUE_TYPE     ||--o{ PRODUCTION_ISSUE : classifies
+
+  CUSTOMER       ||--o{ SALES_ORDER : places
+  SALES_ORDER    ||--o{ SHIPMENT : includes
+  CARRIER        ||--o{ SHIPMENT : ships
+  LOT            ||--o{ SHIPMENT : shipped_as
+  CALENDAR_WEEK  ||--o{ SHIPMENT : ships_in_week
 
   PRODUCTION_LINE {
     string line_id PK
     string name
-    string location
-    boolean active
+    boolean is_active
+  }
+
+  SHIFT {
+    string shift_id PK
+    string name
   }
 
   CALENDAR_WEEK {
@@ -204,38 +137,69 @@ erDiagram
     date end_date
   }
 
+  PART {
+    string part_number PK
+    string description
+  }
+
   LOT {
     string lot_id PK
-    string lot_code
-    string line_id FK
+    string part_number FK
+    date created_date
+  }
+
+  PRODUCTION_RUN {
+    string production_run_id PK
+    date run_date
     string week_id FK
-    datetime started_at
-    datetime ended_at
+    string shift_id FK
+    string line_id FK
+    string lot_id FK
+    int units_planned
+    int units_actual
+    int downtime_minutes
   }
 
   ISSUE_TYPE {
     string issue_type_id PK
     string name
-    string category
   }
 
-  ISSUE {
+  PRODUCTION_ISSUE {
     string issue_id PK
-    string lot_id FK
-    string line_id FK
-    string week_id FK
+    string production_run_id FK "UNIQUE"
     string issue_type_id FK
-    datetime occurred_at
-    string severity
-    string description
+    string supervisor_notes
   }
 
-  REPORT_EXPORT {
-    string export_id PK
+  CUSTOMER {
+    string customer_id PK
+    string name
+  }
+
+  CARRIER {
+    string carrier_id PK
+    string name
+  }
+
+  SALES_ORDER {
+    string sales_order_id PK
+    string customer_id FK
+  }
+
+  SHIPMENT {
+    string shipment_id PK
+    date ship_date
     string week_id FK
-    string line_id FK
-    string export_format
-    datetime created_at
-    string created_by
+    string lot_id FK
+    string sales_order_id FK
+    string destination_state
+    string carrier_id FK
+    string bol_number
+    string tracking_or_pro
+    int qty_shipped
+    string ship_status
+    string hold_reason
+    string shipping_notes
   }
 ```
