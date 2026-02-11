@@ -148,3 +148,55 @@ WHERE s.ship_status = 'partial'
 GROUP BY l.lot_code, so.sales_order_number
 HAVING COUNT(*) >= 2
 ORDER BY partial_shipments DESC, l.lot_code;
+
+-- 11) Issue totals by selected week + selected production lines (AC1, AC2, AC4, AC8, AC9)
+-- Edit literals:
+--   week_label = '2026-W03'
+--   line_names IN ('Line 1','Line 4')
+SELECT
+  cw.week_label,
+  pl.line_name,
+  io.issue_type_name,
+  COUNT(*) AS issue_total
+FROM issue_occurrences io
+JOIN calendar_weeks cw ON cw.calendar_week_id = io.calendar_week_id
+JOIN production_lines pl ON pl.production_line_id = io.production_line_id
+WHERE cw.week_label = '2026-W03'
+  AND pl.line_name IN ('Line 1', 'Line 4')
+GROUP BY cw.week_label, pl.line_name, io.issue_type_name
+ORDER BY pl.line_name, issue_total DESC, io.issue_type_name;
+
+-- 12) Affected lots list for selected week + lines, showing issue type + count (AC6, AC7, AC8)
+SELECT
+  cw.week_label,
+  pl.line_name,
+  l.lot_code,
+  p.part_number,
+  io.issue_type_name,
+  COUNT(*) AS issue_count
+FROM issue_occurrences io
+JOIN calendar_weeks cw ON cw.calendar_week_id = io.calendar_week_id
+JOIN production_lines pl ON pl.production_line_id = io.production_line_id
+JOIN lots l ON l.lot_id = io.lot_id
+JOIN parts p ON p.part_id = l.part_id
+WHERE cw.week_label = '2026-W03'
+  AND pl.line_name IN ('Line 1', 'Line 4')
+GROUP BY cw.week_label, pl.line_name, l.lot_code, p.part_number, io.issue_type_name
+ORDER BY pl.line_name, issue_count DESC, l.lot_code, io.issue_type_name;
+
+-- 13) Ungrouped issue rows for the same selection (supports AC9 "grouped totals match source")
+SELECT
+  cw.week_label,
+  pl.line_name,
+  io.run_date,
+  l.lot_code,
+  p.part_number,
+  io.issue_type_name
+FROM issue_occurrences io
+JOIN calendar_weeks cw ON cw.calendar_week_id = io.calendar_week_id
+JOIN production_lines pl ON pl.production_line_id = io.production_line_id
+JOIN lots l ON l.lot_id = io.lot_id
+JOIN parts p ON p.part_id = l.part_id
+WHERE cw.week_label = '2026-W03'
+  AND pl.line_name IN ('Line 1', 'Line 4')
+ORDER BY io.run_date, pl.line_name, l.lot_code, io.issue_type_name;
